@@ -1,7 +1,8 @@
 package main
 
-//Date 03/08
+//Date 21/08
 import (
+    "bufio"
     "fmt"
     "time"
     "strings"
@@ -45,17 +46,28 @@ func parseJsonPOST(w http.ResponseWriter, r *http.Request) {
         if block == nil {
                 panic("failed to parse PEM block containing the public key")
         }
+
         if(t.LifeTime > 365 || t.Validity > 200) { //Note that lifetime units are days but validity is in hours
                 fmt.Fprintln(w, "Enter parameters are not valid. Maximum lifetime = 365, maximum validity 200.")
         }else {
+
                 LifeTime = t.LifeTime
                 cmdS := decodeCsr(t.Csr)
                 csr_fields := parseFieldsOfCsr(cmdS)
+
+                //Returns true if the domain that the cert is requesting the certificate for is really a domain I own.
+                //All the domains to delegate must be in starCerts/myDomains.txt
+                domainValid := parseDomain(csr_fields.subjectName)
+                if (!domainValid) {
+                  fmt.Fprintln(w, "The requested domain isn't available for name delegation. Domain requested: " + csr_fields.subjectName)
+                } else {
+                fmt.Fprintln(w, "The requested domain and parameters are valid: " + csr_fields.subjectName + " " + strconv.Itoa(LifeTime) + " " + strconv.Itoa(t.Validity))
+
                 /*fmt.Fprintln(w, "Received parameters are valid: LifeTime: ",t.LifeTime," Validity", t.Validity,
                 " Domain:", csr_fields.subjectName)
                 */
                 createTmpFiles(t.Validity)
-                go post_completionURL(cronTaskID, LifeTime,completionURL_value)
+                //go post_completionURL(cronTaskID, LifeTime,completionURL_value)
                 w.WriteHeader(http.StatusCreated)
                 fmt.Fprintln(w, "Location: https://certProxy/star/registration/" + strconv.Itoa(cronTaskID))
                 //time.Sleep(20000 * time.Millisecond)
@@ -66,12 +78,35 @@ func parseJsonPOST(w http.ResponseWriter, r *http.Request) {
                 fmt.Printf("Certbot executed successfully")
                 storeIssuedCerts(t.Validity)
 
-                //go post_completionURL(cronTaskID, LifeTime,completionURL_value)
+                go post_completionURL(cronTaskID, LifeTime,completionURL_value)
                 defer rmTmpFiles() //Removes tmp files, comment this function if you want more information
+                }
 
         }
 
 }
+/*
+Returns true if the domain in the CN field is in ./starCerts/myDomains.txt
+
+*/
+func parseDomain(domainNameInCSR string) bool {
+
+    f, err := os.Open("/root/starCerts/myDomains.txt")
+    if err != nil {
+      panic (err)
+    }
+    defer  f.Close()
+
+    newScanner := bufio.NewScanner(f)
+    for newScanner.Scan (){
+      if newScanner.Text() == domainNameInCSR {
+        return true
+      }
+    }
+    //At this point the file with all the domains has been fully read.
+    return false
+ }
+
 /*
 Saves info about every issued certificate using STAR.
 
@@ -346,4 +381,3 @@ func main() {
     }
 
 }
-
