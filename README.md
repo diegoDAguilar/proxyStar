@@ -33,7 +33,7 @@ Using "git clone https://github.com/diegoDAguilar/boulderStar" also works.
 - Back in boulder/docker-compose.yml change the FAKE_DNS field to the IP of the VM that will act as your server.
 - Set ufw status to inactive: sudo ufw disable
 - Check your iptables policy: "sudo iptables -L" and set CHAIN FORWARD policy to accept if it is currently in DROP mode: "sudo iptables -P FORWARD ACCEPT"
-- Make sure you can reach the other machines by pinging them and change the route table if needed.
+- Make sure you can reach the other machines with ICMP by pinging them and change the route table if needed.
 - Open /etc/hosts and add these 2:
 
 	172.17.0.4      acme-v01.api.letsencrypt.org boulder //this is the local IP of Boulder at least in my machine
@@ -95,6 +95,12 @@ if it works feel free to delete it. If it doesn't, change the file permissions g
 as proxySTAR.go, I am including a cert and key in the Github, but they may be outdated.
 
 -Give execution permisions to all bash scripts executing in /root/: "sudo +x chmod *.sh"
+-Make a new file called starCerts in /root/ and create a txt file called "myDomains.txt" with all the domains you want to be able to delegate. This file shall contain a list
+of all the domains you may delegate. The format is domain and new line. E.g. cat myDomains.txt should return:
+
+bye.com
+heelo.comp
+imRunningOutOfIdeas.com
 
 -Last step. Create a file in /root/ called "serverKey" and create a text file "cert.pem":
 "mkdir serverKey"
@@ -103,6 +109,23 @@ as proxySTAR.go, I am including a cert and key in the Github, but they may be ou
 This is the selfsigned certificate you obtained in the last step of Boulder, so go to the server VM, copy it and paste its contents.
 -Now add the name that you gave to the CA in your certificate with its IP, e.g.
 "192.168.122.128 CertificateAuthoritySTAR"
+
+-Now test if you can access Boulder VM from proxy:
+1. In the server, go to the boulder file and launch it:
+$docker-compose build
+$docker-compose up
+
+2.When it ends launching (A message saying to press ^C pops at the end) go to the proxy and try to ping boulder:
+$ping 172.17.0.4
+
+If it works, stop Boulder:
+	^C
+	docker-compose rm
+	y
+
+If ping fails try $traceroute 172.17.0.4 to see where the message gets lost. Now go to the VM where the last jump was made
+and check the route tables: $route
+You must then add the routing for the 172.17.0.0 network and gateway 255.255.0.0, after it works stop Boulder as explained before.
 
 *****************SIMULATION GUIDE*****************
 
