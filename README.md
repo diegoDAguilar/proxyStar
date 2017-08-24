@@ -1,21 +1,21 @@
 Contents of this file:
 
--Installation Guide --> How to set up the environment
+- Installation Guide --> How to set up the environment
 
--Simulation Guide --> Obtain a STAR certificate yourself
+- Simulation Guide --> Obtain a STAR certificate yourself
 
--Round-Trips Guide --> In depth explanation of every step in STAR
+- Round-Trips Guide --> In depth explanation of every step in STAR
 
 
 
 
 Parts involved in STAR:
 
-1.Boulder/STAR Server
+1. Boulder/STAR Server
 
-2.DNO/ STAR Proxy
+2. DNO/ STAR Proxy
 
-3.CDN/ Star Client
+3. CDN/ Star Client
 
 *****************INSTALLATION GUIDE*****************
 
